@@ -37,7 +37,7 @@ COLORS = {1: "#D81B7A", 2: "#7D3C98", 3: "#1B9E77",
 def _configure(use_tex=True):
     matplotlib.rcParams.update({
         "font.family": "serif", "font.serif": ["Computer Modern Roman"],
-        "font.size": 11, "axes.linewidth": 1.0, "text.usetex": use_tex,
+        "font.size": 11, "axes.linewidth": 1.0, "text.usetex": use_tex, "axes.unicode_minus": False,
         "xtick.direction": "in", "ytick.direction": "in",
         "xtick.top": True, "ytick.right": True,
     })
