@@ -1,7 +1,11 @@
 import numpy as np, os, re, sys, glob
+if len(sys.argv)!=4:
+    sys.exit(f"usage: {os.path.basename(sys.argv[0])} <base_dir> <theta_deg> <out.npz>")
 base=sys.argv[1]; theta_deg=float(sys.argv[2]); out=sys.argv[3]
 theta=theta_deg*np.pi/180.0; HP=1e-4
 dom=os.path.join(base,"domain"); files=sorted(glob.glob(os.path.join(dom,"domain_*.txt")))
+if not files:
+    sys.exit(f"no domain_*.txt snapshots found in {dom!r}; check the run path / that the simulation has produced output")
 def sub(a,n=600):
     a=np.asarray(a)
     return a if len(a)<=n else a[np.linspace(0,len(a)-1,n).astype(int)]

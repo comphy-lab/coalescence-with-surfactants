@@ -69,6 +69,10 @@ def build(use_tex=True):
         color, mk = COLORS.get(th, "#444"), MARKS.get(th, "o")
         t, h = d["h0t"][:, 0], d["h0t"][:, 1]
         keep = h > 1.5 * HP
+        if not keep.any():
+            print(f"skipping {p.name}: no neck heights above {1.5 * HP:g} "
+                  f"(truncated/too-short run)")
+            continue
         t, y = t[keep], h[keep] / (V_STAR * thr**4)
         ts, ys = _subsample_log(t, y)
         ax.plot(ts, ys, mk, ms=5.4, mfc=color, mec="white", mew=0.3,

@@ -60,7 +60,14 @@ def _rhs(eta: float, y, c: float):
 
 
 def _integrate(s: float, c: float, eta_max: float):
-    """Integrate the similarity ODE from the neck with F''(0) = s."""
+    """Integrate the similarity ODE from the neck with F''(0) = s.
+
+    Returns the raw ``solve_ivp`` result. Mis-bracketed shoots legitimately
+    pinch the film (F -> 0) and stop early with ``success == False`` while still
+    yielding a usable truncated end-slope; the shooting residual relies on that,
+    so the success check is enforced on the *accepted* solution in
+    :func:`solve_master` rather than here.
+    """
     return solve_ivp(_rhs, [0.0, eta_max], [1.0, 0.0, s, 0.0], args=(c,),
                      rtol=1e-11, atol=1e-13, dense_output=True, max_step=5e-3)
 
@@ -74,8 +81,20 @@ def solve_master(c: float = C_STAR, eta_max: float = ETA_MAX):
     def slope_defect(s):
         return _integrate(s, c, eta_max).y[1, -1] - 1.0   # F'(eta_max) - 1
 
-    s = brentq(slope_defect, 0.2, 2.0, xtol=1e-12)
+    s_lo, s_hi = 0.2, 2.0
+    d_lo, d_hi = slope_defect(s_lo), slope_defect(s_hi)
+    if d_lo * d_hi > 0.0:
+        raise RuntimeError(
+            f"shooting bracket [{s_lo}, {s_hi}] for F''(0) does not straddle a "
+            f"root of F'(eta_max)-1 (defects {d_lo:+.3g}, {d_hi:+.3g}) for "
+            f"c={c:.6g}, eta_max={eta_max:.6g}; widen the bracket or adjust c.")
+    s = brentq(slope_defect, s_lo, s_hi, xtol=1e-12)
     sol = _integrate(s, c, eta_max)
+    if not sol.success:
+        raise RuntimeError(
+            f"matched shoot F''(0)={s:.6g} failed to integrate to eta_max="
+            f"{eta_max:.6g} (c={c:.6g}): {sol.message}; the dense solution would "
+            f"extrapolate past the integrated range.")
     return s, sol, float(sol.y[2, -1])
 
 
